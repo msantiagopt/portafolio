@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mario Pérez — Editor de Video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #121318;
+    --panel: #1B1D24;
+    --panel-2: #22242D;
+    --line: #33353F;
+    --ink: #F2F1ED;
+    --ink-dim: #9497A3;
+    --cyan: #4CE0D2;
+    --pink: #FF5C8A;
+    --amber: #FFC857;
+    --mono: 'Space Mono', monospace;
+    --display: 'Bebas Neue', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  ::selection{ background: var(--cyan); color: #0A0B0E; }
+
+  a{ color: var(--cyan); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+
+  :focus-visible{
+    outline: 2px solid var(--cyan);
+    outline-offset: 3px;
+  }
+
+  .wrap{
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- Timecode scrub bar (signature element) ---------- */
+  .scrubtrack{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(18,19,24,0.88);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .scrub-inner{
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .scrub-label{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .scrub-line{
+    position: relative;
+    flex: 1;
+    height: 2px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  .scrub-fill{
+    position: absolute;
+    left:0; top:0; bottom:0;
+    width: 38%;
+    background: linear-gradient(90deg, var(--cyan), var(--pink));
+    border-radius: 2px;
+  }
+  .scrub-play{
+    position: absolute;
+    left: 38%;
+    top: 50%;
+    width: 10px; height: 10px;
+    background: var(--pink);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 0 0 4px rgba(255,92,138,0.15);
+  }
+  .scrub-name{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    white-space: nowrap;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding: 96px 0 80px;
+    position: relative;
+  }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before{
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--pink);
+    display: inline-block;
+    animation: rec-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes rec-pulse{
+    0%,100%{ opacity: 1; }
+    50%{ opacity: 0.25; }
+  }
+  h1{
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(56px, 10vw, 108px);
+    line-height: 0.92;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  h1 .accent{
+    background: linear-gradient(90deg, var(--cyan), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-sub{
+    margin-top: 22px;
+    max-width: 540px;
+    font-size: 18px;
+    color: var(--ink-dim);
+  }
+  .hero-stats{
+    margin-top: 44px;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 32px;
+    max-width: 720px;
+  }
+  .stat-num{
+    font-family: var(--display);
+    font-size: 40px;
+    letter-spacing: 0.02em;
+  }
+  .stat-label{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+
+  /* ---------- Section shell ---------- */
+  section{ padding: 64px 0; }
+  .section-head{
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+  }
+  .section-tc{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--pink);
+  }
+  .section-title{
+    font-family: var(--display);
+    font-size: 32px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Timeline ---------- */
+  .timeline{
+    position: relative;
+    padding-left: 28px;
+    border-left: 2px solid var(--line);
+  }
+  .tl-item{
+    position: relative;
+    padding-bottom: 44px;
+  }
+  .tl-item:last-child{ padding-bottom: 0; }
+  .tl-item::before{
+    content: '';
+    position: absolute;
+    left: -35px;
+    top: 4px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--cyan);
+  }
+  .tl-item.current::before{
+    background: var(--pink);
+    border-color: var(--pink);
+  }
+  .tl-time{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 0.05em;
+  }
+  .badge{
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 9px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pink);
+    border: 1px solid var(--pink);
+    border-radius: 100px;
+  }
+
+  /* ---------- Now: parallel tracks ---------- */
+  .now-label{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--pink);
+    letter-spacing: 0.05em;
+    margin: 40px 0 16px;
+  }
+  .tracks{
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 30px 26px 22px;
+  }
+  .tracks-playhead{
+    position: absolute;
+    top: 10px;
+    bottom: 22px;
+    left: 74%;
+    width: 2px;
+    background: linear-gradient(var(--pink), var(--cyan));
+  }
+  .tracks-playhead::before{
+    content: 'AHORA';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--pink);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .tracks-playhead::after{
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--pink);
+  }
+  .track-row{
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .track-row:last-child{ margin-bottom: 0; }
+  .track-tag{
+    width: 30px;
+    flex-shrink: 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+  }
+  .track-clip{
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--cyan);
+    border-radius: 3px;
+    padding: 13px 18px;
+  }
+  .track-clip.pink{ border-left-color: var(--pink); }
+  .track-clip.amber{ border-left-color: var(--amber); }
+  .track-title{
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .track-desc{
+    margin-top: 3px;
+    font-size: 13.5px;
+    color: var(--ink-dim);
+  }
+
+  /* ---------- Edición destacada (videos embebidos) ---------- */
+  .reel-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+    max-width: 560px;
+  }
+  .reel-frame{
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    background: #000;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(76,224,210,0.08), 0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+  .reel-frame iframe{
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  .reel-label{
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  @media (max-width: 480px){
+    .reel-grid{ grid-template-columns: 1fr 1fr; gap: 16px; }
+  }
+  .tl-title{
+    font-family: var(--body);
+    font-weight: 700;
+    font-size: 19px;
+    margin-top: 6px;
+  }
+  .tl-desc{
+    margin-top: 6px;
+    color: var(--ink-dim);
+    font-size: 15px;
+    max-width: 560px;
+  }
+
+  /* ---------- Growth cases ---------- */
+  .cases{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .case-card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .case-card::after{
+    content: '';
+    position: absolute;
+    right: -30px; top: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(76,224,210,0.15), transparent 70%);
+  }
+  .case-tag{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .case-num{
+    font-family: var(--display);
+    font-size: 52px;
+    line-height: 1;
+    margin-top: 10px;
+    color: var(--cyan);
+  }
+  .case-card:nth-child(2) .case-num{ color: var(--pink); }
+  .case-desc{
+    margin-top: 14px;
+    font-size: 14.5px;
+    color: var(--ink-dim);
+  }
+
+  /* ---------- AI flow process ---------- */
+  .flow{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .flow-step{
+    padding: 28px 24px;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  .flow-step:last-child{ border-right: none; }
+  .flow-step::before{
+    content: attr(data-tc);
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    margin-bottom: 14px;
+  }
+  .flow-num{
+    font-family: var(--display);
+    font-size: 34px;
+    color: var(--cyan);
+  }
+  .flow-title{
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: 8px;
+  }
+  .flow-desc{
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--ink-dim);
+  }
+  .flow-arrow{
+    display: none;
+  }
+
+  /* ---------- Stack ---------- */
+  .stack-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .chip{
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    color: var(--ink-dim);
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    padding: 60px 0 80px;
+    border-top: 1px solid var(--line);
+    margin-top: 20px;
+  }
+  .footer-title{
+    font-family: var(--display);
+    font-size: 30px;
+    text-transform: uppercase;
+  }
+  .footer-links{
+    margin-top: 20px;
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+  .footer-note{
+    margin-top: 34px;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+  }
+
+  @media (max-width: 640px){
+    .hero{ padding: 64px 0 56px; }
+    .hero-stats{ grid-template-columns: 1fr 1fr; gap: 28px; }
+    .cases{ grid-template-columns: 1fr; }
+    .flow{ grid-template-columns: 1fr; }
+    .flow-step{ border-right: none; border-bottom: 1px solid var(--line); }
+    .flow-step:last-child{ border-bottom: none; }
+    .scrub-label, .scrub-name{ display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .eyebrow::before{ animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scrubtrack">
+  <div class="scrub-inner">
+    <span class="scrub-label">00:00:00</span>
+    <div class="scrub-line">
+      <div class="scrub-fill"></div>
+      <div class="scrub-play"></div>
+    </div>
+    <span class="scrub-name">mario_perez_portfolio.mp4</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section class="hero">
+    <p class="eyebrow">Grabando desde 2024</p>
+    <h1>Mario Pérez<br><span class="accent">Editor de Video</span></h1>
+    <p class="hero-sub">Edito para retener, no solo para que se vea bonito. Integro IA al flujo — guion, b-roll y corte — sin perder criterio de editor.</p>
+
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">200K+</div>
+        <div class="stat-label">Seguidores ganados<br>en cuenta de cliente</div>
+      </div>
+      <div>
+        <div class="stat-num">50K+</div>
+        <div class="stat-label">Seguidores en<br>cuentas propias</div>
+      </div>
+      <div>
+        <div class="stat-num">20M+</div>
+        <div class="stat-label">Reproducciones cuenta<br>propia (IG + TikTok)</div>
+      </div>
+      <div>
+        <div class="stat-num">8+</div>
+        <div class="stat-label">Meses como editor<br>de agencia</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="historial">
+    <div class="section-head">
+      <span class="section-tc">00:00:12</span>
+      <h2 class="section-title">Historial</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-time">Agosto 2024</div>
+        <div class="tl-title">Empiezo a editar</div>
+        <div class="tl-desc">Primeros cortes para mi propio canal de streaming. Ahí aprendo ritmo, ganchos y a editar contra el reloj.</div>
+      </div>
+      <div class="tl-item current">
+        <div class="tl-time">2026 — Actualidad</div>
+        <div class="tl-title">Editor personal del dueño de una agencia de marketing</div>
+        <div class="tl-desc">Empiezo a trabajar como su editor de video — su cuenta pasa de 800 a más de 200K seguidores. Simultáneamente, empiezo a trabajar con su agencia, su socia, y hago crecer mis propias cuentas para un total de 50K seguidores en mis redes.</div>
+      </div>
+    </div>
+
+    <p class="now-label">Hoy — todo esto en paralelo</p>
+    <div class="tracks">
+      <div class="tracks-playhead"></div>
+      <div class="track-row">
+        <div class="track-tag">V1</div>
+        <div class="track-clip">
+          <div class="track-title">Agencia</div>
+          <div class="track-desc">Editor de video para la agencia y sus dueños.</div>
+        </div>
+      </div>
+      <div class="track-row">
+        <div class="track-tag">A1</div>
+        <div class="track-clip pink">
+          <div class="track-title">Freelance</div>
+          <div class="track-desc">Abierto a clientes internacionales, con enfoque en propuestas de valor a largo plazo.</div>
+        </div>
+      </div>
+      <div class="track-row">
+        <div class="track-tag">T1</div>
+        <div class="track-clip amber">
+          <div class="track-title">Contenido propio</div>
+          <div class="track-desc">50K seguidores y más de 20M de reproducciones entre mis cuentas.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="casos">
+    <div class="section-head">
+      <span class="section-tc">00:00:31</span>
+      <h2 class="section-title">Casos de crecimiento</h2>
+    </div>
+
+    <div class="cases">
+      <div class="case-card">
+        <div class="case-tag">Cliente confidencial</div>
+        <div class="case-num">800 → 200K</div>
+        <div class="case-desc">Cuenta personal de un cliente del sector marketing. Edición diaria, estrategia de retención y ritmo de publicación constante.</div>
+      </div>
+      <div class="case-card">
+        <div class="case-tag">Cuenta propia</div>
+        <div class="case-num">900 → 50K</div>
+        <div class="case-desc">Contenido orgánico, sin pauta publicitaria. Más de 20M de reproducciones acumuladas entre Instagram y TikTok.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="destacada">
+    <div class="section-head">
+      <span class="section-tc">00:00:39</span>
+      <h2 class="section-title">Edición destacada</h2>
+    </div>
+
+    <div class="reel-grid">
+      <div>
+        <div class="reel-frame">
+          <iframe src="https://www.youtube-nocookie.com/embed/9SDl3JsqLvM" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Video 01</p>
+      </div>
+      <div>
+        <div class="reel-frame">
+          <iframe src="https://www.youtube-nocookie.com/embed/g21wab_HM6I" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Video 02</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="stack">
+    <div class="section-head">
+      <span class="section-tc">00:00:52</span>
+      <h2 class="section-title">Herramientas</h2>
+    </div>
+    <div class="stack-row">
+      <span class="chip">CapCut</span>
+      <span class="chip">Gemini</span>
+      <span class="chip">Claude</span>
+      <span class="chip">Grok</span>
+      <span class="chip">Google Flow</span>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-title">Hablemos</div>
+    <div class="footer-links">
+      <a href="https://instagram.com/msantiagopt" target="_blank" rel="noopener">Instagram — @msantiagopt</a>
+      <a href="https://www.tiktok.com/@msantiagopt" target="_blank" rel="noopener">TikTok — @msantiagopt</a>
+      <a href="https://drive.google.com/drive/folders/1OvEFuwh6z7AGAicXF4qlLc_4C8mE6gvL" target="_blank" rel="noopener">Portafolio completo (Drive)</a>
+      <a href="mailto:msantiagopt@gmail.com">msantiagopt@gmail.com</a>
+      <a href="https://wa.me/584245293344" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+    <p class="footer-note">Portafolio en video y capturas completo disponible en Google Drive — link arriba.</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
