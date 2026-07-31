@@ -354,6 +354,30 @@
   @media (max-width: 480px){
     .reel-grid{ grid-template-columns: 1fr 1fr; gap: 16px; }
   }
+
+  .subgroup-label{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+  }
+  .subgroup-label.agil{
+    margin-top: 40px;
+  }
+  .reel-grid-agil{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    max-width: 720px;
+  }
+  .reel-frame.small{
+    box-shadow: 0 0 0 1px rgba(255,92,138,0.08), 0 14px 28px -18px rgba(0,0,0,0.6);
+  }
+  @media (max-width: 640px){
+    .reel-grid-agil{ grid-template-columns: 1fr 1fr; }
+  }
   .tl-title{
     font-family: var(--body);
     font-weight: 700;
@@ -548,9 +572,60 @@
     </div>
   </section>
 
+  <section id="trabajo">
+    <div class="section-head">
+      <span class="section-tc">00:00:08</span>
+      <h2 class="section-title">Sobre mi trabajo</h2>
+    </div>
+
+    <p class="subgroup-label">Edición destacada</p>
+    <div class="reel-grid">
+      <div>
+        <div class="reel-frame">
+          <iframe src="https://www.youtube-nocookie.com/embed/9SDl3JsqLvM" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Video 01</p>
+      </div>
+      <div>
+        <div class="reel-frame">
+          <iframe src="https://www.youtube-nocookie.com/embed/g21wab_HM6I" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Video 02</p>
+      </div>
+    </div>
+
+    <p class="subgroup-label agil">Edición ágil</p>
+    <div class="reel-grid-agil">
+      <div>
+        <div class="reel-frame small">
+          <iframe src="https://www.youtube-nocookie.com/embed/Yt9mL5iJog0" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Ágil 01</p>
+      </div>
+      <div>
+        <div class="reel-frame small">
+          <iframe src="https://www.youtube-nocookie.com/embed/gD25iWuke1s" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Ágil 02</p>
+      </div>
+      <div>
+        <div class="reel-frame small">
+          <iframe src="https://www.youtube-nocookie.com/embed/QQkR8KjTFtU" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Ágil 03</p>
+      </div>
+      <div>
+        <div class="reel-frame small">
+          <iframe src="https://www.youtube-nocookie.com/embed/8NPhRlxCCFw" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+        <p class="reel-label">Ágil 04</p>
+      </div>
+    </div>
+  </section>
+
   <section id="historial">
     <div class="section-head">
-      <span class="section-tc">00:00:12</span>
+      <span class="section-tc">00:00:20</span>
       <h2 class="section-title">Historial</h2>
     </div>
 
@@ -596,7 +671,7 @@
 
   <section id="casos">
     <div class="section-head">
-      <span class="section-tc">00:00:31</span>
+      <span class="section-tc">00:00:38</span>
       <h2 class="section-title">Casos de crecimiento</h2>
     </div>
 
@@ -614,31 +689,9 @@
     </div>
   </section>
 
-  <section id="destacada">
-    <div class="section-head">
-      <span class="section-tc">00:00:39</span>
-      <h2 class="section-title">Edición destacada</h2>
-    </div>
-
-    <div class="reel-grid">
-      <div>
-        <div class="reel-frame">
-          <iframe src="https://www.youtube-nocookie.com/embed/9SDl3JsqLvM" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-        <p class="reel-label">Video 01</p>
-      </div>
-      <div>
-        <div class="reel-frame">
-          <iframe src="https://www.youtube-nocookie.com/embed/g21wab_HM6I" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-        <p class="reel-label">Video 02</p>
-      </div>
-    </div>
-  </section>
-
   <section id="stack">
     <div class="section-head">
-      <span class="section-tc">00:00:52</span>
+      <span class="section-tc">00:00:50</span>
       <h2 class="section-title">Herramientas</h2>
     </div>
     <div class="stack-row">
